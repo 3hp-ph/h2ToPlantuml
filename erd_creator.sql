@@ -6,6 +6,7 @@ SELECT
   C.COLUMN_NAME,
   C.DATA_TYPE,
   C.IS_NULLABLE,
+  IC.IS_UNIQUE,
   -- Check if this column is a foreign key
   COALESCE((
     SELECT CCU.TABLE_NAME
@@ -30,6 +31,9 @@ SELECT
       AND PKCU.COLUMN_NAME = C.COLUMN_NAME
   ) THEN 'YES' ELSE 'NO' END AS IS_PK
 FROM INFORMATION_SCHEMA.COLUMNS C
+left join INFORMATION_SCHEMA.INDEX_COLUMNS IC
+  on C.TABLE_NAME = IC.TABLE_NAME
+  and C.COLUMN_NAME = IC.COLUMN_NAME
 WHERE C.TABLE_SCHEMA = 'PUBLIC'
   -- exclude tables used for the ER diagram itself
   AND C.TABLE_NAME NOT IN ('ER_COLUMNS', 'ER_ENTITIES', 'ER_RELATIONS')
@@ -61,11 +65,18 @@ ORDER BY TABLE_NAME;
 drop table ER_RELATIONS;
 create table ER_RELATIONS as
 SELECT 
-case
-when is_nullable = 'YES' then
-  TABLE_NAME || ' }--o| ' || REFERENCED_TABLE
-else TABLE_NAME || ' }--|| ' || REFERENCED_TABLE
-end as TEXT
+    TABLE_NAME || ' ' ||
+    case
+      when is_unique = TRUE then '|o'
+      else '}'
+    end ||
+    '--' ||
+    case
+      when is_nullable = 'YES' then 'o| '
+      else '||' 
+    end
+    || ' ' || REFERENCED_TABLE
+as TEXT
 FROM ER_COLUMNS
 where REFERENCED_TABLE <> '';
 
