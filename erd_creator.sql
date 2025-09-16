@@ -63,7 +63,7 @@ create table ER_RELATIONS as
 SELECT 
 case
 when is_nullable = 'YES' then
-  TABLE_NAME || ' }o--|| ' || REFERENCED_TABLE
+  TABLE_NAME || ' }--o| ' || REFERENCED_TABLE
 else TABLE_NAME || ' }--|| ' || REFERENCED_TABLE
 end as TEXT
 FROM ER_COLUMNS
